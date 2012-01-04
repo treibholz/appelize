@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-This program "appelizes" your music in a separate directory.
+This program "appelizes" your music into a separate directory.
 
 It recodes audio files that don't work in the apple world (like flac and ogg)
 and hardlinks the unknown ones (like mp3, jpeg and so on.) The result is a
@@ -11,13 +11,7 @@ At the moment it recodes everything to mp3, but other formats will be
 supported in the future.
 """
 
-__revision__ = "$Id$"
-#
-# $LastChangedDate$
-# $Author$
-# $Rev$
-# $HeadURL$
-#
+__revision__ = "0.1"
 
 import os
 import mutagen
@@ -25,7 +19,7 @@ import thread
 from time import sleep
 
 class musicDirectories(object): # {{{
-   """docstring for musicDirectories"""
+   """initialize your two directories"""
 
    def __init__(self, srcDir, destDir): # {{{
       super(musicDirectories, self).__init__()
@@ -35,7 +29,7 @@ class musicDirectories(object): # {{{
                               }
       self.maxThreads = 4 
 
-      self.recodeList = []
+      self.recode_queue = []
 
       # expand the directories
       self.srcDir = os.path.abspath(os.path.expanduser(srcDir))
@@ -51,7 +45,8 @@ class musicDirectories(object): # {{{
    # }}}
 
    def checkEncode(self,fileName): # {{{
-      """docstring for checkEncode"""
+      """checkEncode checks if a file needs to be recoded or not,
+      according to it's file-extension."""
       ext = os.path.splitext(fileName)[1][1:].lower()
       if ext in self.recodeExtensions:
          return ext
@@ -60,12 +55,12 @@ class musicDirectories(object): # {{{
    # }}}
 
    def add_to_recode_queue(self,filename): # {{{
-      """docstring for recode"""
-      self.recodeList.append(filename)
+      """add a file to the recode_queue"""
+      self.recode_queue.append(filename)
    # }}}
 
    def hardLink(self,filename): # {{{
-      """docstring for hardlink"""
+      """hardlinks a file, if it isn't there yet."""
       dest = os.path.join(self.destDir,filename)
       if not os.path.exists(dest):
          src = os.path.join(self.srcDir,filename)
@@ -73,7 +68,7 @@ class musicDirectories(object): # {{{
    # }}}
 
    def mkDestDir(self,filename): # {{{
-      """docstring for mkDestDir"""
+      """creates the destination directory"""
       destDir = os.path.join(self.destDir,os.path.dirname(filename))
       if not os.path.exists(destDir):
          os.makedirs(destDir)
@@ -82,7 +77,9 @@ class musicDirectories(object): # {{{
    def easywork(self): # {{{
       """easywork walks through the filelist and checks whether they
       need to be recoded or not. If they don't need to be recoded, it
-      sets the hardlink, otherwise it adds them to the recode queue"""
+      sets the hardlink, otherwise it adds them to the recode queue.
+      This is the easy part."""
+
       for i in self.fileList:
          self.mkDestDir(i)
          if self.checkEncode(i):
@@ -92,8 +89,9 @@ class musicDirectories(object): # {{{
    # }}}
 
    def hardwork(self): # {{{
-      """docstring for hardwork"""
-      for i in self.recodeList:
+      """hardwork does the hard work, it recodes the files."""
+
+      for i in self.recode_queue:
          inFile  = os.path.join(self.srcDir,i)
          outFile = os.path.join(self.destDir, '%s.mp3' % os.path.splitext(i)[0])
          if not os.path.exists(outFile):
@@ -105,8 +103,9 @@ class musicDirectories(object): # {{{
 # }}}
 
 class Recode(object): # {{{
-   """docstring for Recode"""
+   """The actual recoding happens here."""
    def __init__(self, inFile, outFile, outFormat='mp3'): # {{{
+      """compiles the command to recode"""
       super(Recode, self).__init__()
 
       tagTranslate = { # here will be more soon
@@ -159,7 +158,7 @@ class Recode(object): # {{{
    # }}}
 
    def work(self): # {{{
-      """docstring for work"""
+      """Do the work: recode the file"""
       print "recoding: %s" % (self.inFile,)
       #print self.cmd
       os.system(self.cmd.encode('utf8'))
