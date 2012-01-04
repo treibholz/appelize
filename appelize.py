@@ -1,7 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-This program "appelizes" your music in a separate directory
+This program "appelizes" your music in a separate directory.
+
+It recodes audio files that don't work in the apple world (like flac and ogg)
+and hardlinks the unknown ones (like mp3, jpeg and so on.) The result is a
+space saving copy of your music.
+
+At the moment it recodes everything to mp3, but other formats will be
+supported in the future.
 """
 
 __revision__ = "$Id$"
