@@ -14,6 +14,7 @@ supported in the future.
 __revision__ = "0.1"
 
 import os
+import sys
 import mutagen
 import thread
 from time import sleep
@@ -167,10 +168,17 @@ class Recode(object): # {{{
 
 if __name__ == "__main__":
 
-   m = musicDirectories('~/Musik/Tool', '~/applemusic')
+   if len(sys.argv) != 3:
+      print "usage: %s <srcDir> <destDir>"
+      sys.exit(1)
+   else:
+      srcDir = sys.argv[1]
+      destDir = sys.argv[2]
 
-   m.easywork()
-   m.hardwork()
+      m = musicDirectories(srcDir, destDir)
+
+      m.easywork()
+      m.hardwork()
 
 
 
