@@ -1,6 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
+"""
+This program "appelizes" your music in a separate directory
+"""
+
 __revision__ = "$Id$"
 #
 # $LastChangedDate$
@@ -49,7 +52,7 @@ class musicDirectories(object): # {{{
          return False
    # }}}
 
-   def recode(self,filename): # {{{
+   def add_to_recode_queue(self,filename): # {{{
       """docstring for recode"""
       self.recodeList.append(filename)
    # }}}
@@ -70,11 +73,13 @@ class musicDirectories(object): # {{{
    # }}}
 
    def easywork(self): # {{{
-      """docstring for work"""
+      """easywork walks through the filelist and checks whether they
+      need to be recoded or not. If they don't need to be recoded, it
+      sets the hardlink, otherwise it adds them to the recode queue"""
       for i in self.fileList:
          self.mkDestDir(i)
          if self.checkEncode(i):
-            self.recode(i)
+            self.add_to_recode_queue(i)
          else:
             self.hardLink(i)
    # }}}
@@ -84,9 +89,10 @@ class musicDirectories(object): # {{{
       for i in self.recodeList:
          inFile  = os.path.join(self.srcDir,i)
          outFile = os.path.join(self.destDir, '%s.mp3' % os.path.splitext(i)[0])
-         self.mkDestDir(i)
-         s = Recode(inFile,outFile)
-         s.work()
+         if not os.path.exists(outFile):
+            self.mkDestDir(i)
+            s = Recode(inFile,outFile)
+            s.work()
    # }}}
 
 # }}}
@@ -148,7 +154,8 @@ class Recode(object): # {{{
    def work(self): # {{{
       """docstring for work"""
       print "recoding: %s" % (self.inFile,)
-      os.system(self.cmd)
+      #print self.cmd
+      os.system(self.cmd.encode('utf8'))
    # }}}
 
 # }}}
