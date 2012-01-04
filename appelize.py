@@ -91,6 +91,10 @@ class musicDirectories(object): # {{{
    def hardwork(self): # {{{
       """hardwork does the hard work, it recodes the files."""
 
+      maxThreads = 4
+      threads = 0
+      lock = thread.allocate_lock()
+
       for i in self.recode_queue:
          inFile  = os.path.join(self.srcDir,i)
          outFile = os.path.join(self.destDir, '%s.mp3' % os.path.splitext(i)[0])
@@ -119,7 +123,8 @@ class Recode(object): # {{{
          }
       }
 
-      self.inFile = inFile
+      self.inFile  = inFile.decode('utf8')
+      self.outFile = outFile.decode('utf8')
 
       # read the tags from the file
       tags = mutagen.File(inFile)
@@ -131,36 +136,30 @@ class Recode(object): # {{{
          # get the format according to the extension (cheap!)
          inFormat = os.path.splitext(inFile)[1][1:].lower()
 
-         decoder = {  'flac'   : 'flac --silent --stdout --decode "%s" ' % (inFile, ),
-                           'ogg'    : 'oggdec --quiet --output=- "%s" ' % (inFile, ),
-                        }
+         decoder = {  'flac'   : u'flac --silent --stdout --decode "%s" ' % (self.inFile, ),
+                      'ogg'    : u'oggdec --quiet --output=- "%s" ' % (self.inFile, ),
+                   }
 
-         encoder = {  'mp3' :  'lame',
-                           'm4a' :  'faac',
-                        }
+         encoder = {  'mp3' :  u'lame',
+                      'm4a' :  u'faac',
+                   }
 
-         encoderOpts = { 'lame' : '-q 0 -V 0 -b 192 -B 320 --quiet -' }
+         encoderOpts = { 'lame' : u'-q 0 -V 0 -b 192 -B 320 --quiet -' }
 
          tagOptions = ''
          for i in tags.keys():
             try:
-               tagOptions += ' %s "%s" ' % ( tagTranslate[encoder[outFormat]][i], tags[i][0], )
+               tagOptions += u' %s "%s" ' % ( tagTranslate[encoder[outFormat]][i], tags[i][0], )
             except KeyError:
                pass
-         try:
-            self.cmd = u'%s | %s %s %s "%s"' % (decoder[inFormat], encoder[outFormat], tagOptions, encoderOpts[encoder[outFormat]], outFile, )
-         except:
-            print decoder[inFormat]
-            print encoder[outFormat]
-            print tagOptions
-            self.cmd='/bin/true'
+         self.cmd = u'%s | %s %s %s "%s"' % (decoder[inFormat], encoder[outFormat], tagOptions, encoderOpts[encoder[outFormat]], self.outFile, )
 
    # }}}
 
    def work(self): # {{{
       """Do the work: recode the file"""
       print "recoding: %s" % (self.inFile,)
-      print self.cmd
+      #print self.cmd
       os.system(self.cmd.encode('utf8'))
    # }}}
 
