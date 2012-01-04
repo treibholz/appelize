@@ -139,7 +139,7 @@ class Recode(object): # {{{
                            'm4a' :  'faac',
                         }
 
-         encoderOpts = { 'lame' : '-s 44.1 -q 0 -V 0 -v -b 192 -B 256 --quiet -' }
+         encoderOpts = { 'lame' : '-q 0 -V 0 -b 192 -B 320 --quiet -' }
 
          tagOptions = ''
          for i in tags.keys():
@@ -160,7 +160,7 @@ class Recode(object): # {{{
    def work(self): # {{{
       """Do the work: recode the file"""
       print "recoding: %s" % (self.inFile,)
-      #print self.cmd
+      print self.cmd
       os.system(self.cmd.encode('utf8'))
    # }}}
 
