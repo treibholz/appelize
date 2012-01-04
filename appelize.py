@@ -16,7 +16,6 @@ __revision__ = "0.1"
 import os
 import sys
 import mutagen
-import thread
 from time import sleep
 
 class musicDirectories(object): # {{{
@@ -92,9 +91,6 @@ class musicDirectories(object): # {{{
    def hardwork(self): # {{{
       """hardwork does the hard work, it recodes the files."""
 
-      maxThreads = 4
-      threads = 0
-      lock = thread.allocate_lock()
 
       for i in self.recode_queue:
          inFile  = os.path.join(self.srcDir,i)
