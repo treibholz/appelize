@@ -159,8 +159,8 @@ class Recode(threading.Thread): # {{{
          }
       }
 
-      self.inFile  = inFile.decode('utf8')
-      self.outFile = outFile.decode('utf8')
+      self.inFile  = re.sub('`','\`',inFile.decode('utf8'))
+      self.outFile = re.sub('`','\`',outFile.decode('utf8'))
 
       # read the tags from the file
       tags = mutagen.File(inFile)
