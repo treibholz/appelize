@@ -14,6 +14,7 @@ supported in the future.
 __revision__ = "0.2"
 
 import os
+import re
 import sys
 import mutagen
 import threading
@@ -169,8 +170,8 @@ class Recode(threading.Thread): # {{{
          # get the format according to the extension (cheap!)
          inFormat = os.path.splitext(inFile)[1][1:].lower()
 
-         decoder = {  'flac'   : u'flac --silent --stdout --decode "%s" ' % (self.inFile, ),
-                      'ogg'    : u'oggdec --quiet --output=- "%s" ' % (self.inFile, ),
+         decoder = {  'flac'   : u'flac --silent --stdout --decode ',
+                      'ogg'    : u'oggdec --quiet --output=- ',
                    }
 
          encoder = {  'mp3' :  u'lame',
@@ -182,17 +183,17 @@ class Recode(threading.Thread): # {{{
          tagOptions = ''
          for i in tags.keys():
             try:
-               tagOptions += u' %s "%s" ' % ( tagTranslate[encoder[outFormat]][i], tags[i][0], )
+               tagOptions += u""" %s "%s" """ % ( tagTranslate[encoder[outFormat]][i], re.sub('`','\`',tags[i][0]), )
             except KeyError:
                pass
-         self.cmd = u'%s | %s %s %s "%s"' % (decoder[inFormat], encoder[outFormat], tagOptions, encoderOpts[encoder[outFormat]], self.outFile, )
+         self.cmd = """%s '%s' | %s %s %s '%s' """ % (decoder[inFormat], self.inFile, encoder[outFormat], tagOptions, encoderOpts[encoder[outFormat]], self.outFile, )
 
    # }}}
 
    def run(self): # {{{
       """Do the work: recode the file"""
       print "recoding: %s" % (self.inFile,)
-      #print self.cmd
+      print self.cmd
       os.system(self.cmd.encode('utf8'))
 
       Recode.lock.acquire()
