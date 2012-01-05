@@ -36,7 +36,7 @@ class musicDirectories(object): # {{{
       super(musicDirectories, self).__init__()
 
       self.recodeExtensions = { 'ogg'  : 'mp3',
-                                'flac' :'mp3',
+                                'flac' : 'mp3',
                               }
 
       # if max_threads is not set, set the amount of CPUs. If this is not possible
@@ -114,7 +114,9 @@ class musicDirectories(object): # {{{
 
       for i in self.recode_queue:
          inFile  = os.path.join(self.srcDir,i)
-         outFile = os.path.join(self.destDir, '%s.mp3' % os.path.splitext(i)[0])
+         # get the extension of the outfile
+         destExt = self.recodeExtensions[os.path.splitext(i)[1][1:]]
+         outFile = os.path.join(self.destDir, '%s.%s' % (os.path.splitext(i)[0], destExt,) )
 
          if not os.path.exists(outFile):
             self.mkDestDir(i)
@@ -123,7 +125,7 @@ class musicDirectories(object): # {{{
             while Recode.thread_count >= self.max_threads:
                sleep(0.1)
 
-            thread = Recode(inFile,outFile)
+            thread = Recode(inFile,outFile,destExt)
             work_threads.append(thread)
             thread.start()
 
@@ -193,7 +195,7 @@ class Recode(threading.Thread): # {{{
    def run(self): # {{{
       """Do the work: recode the file"""
       print "recoding: %s" % (self.inFile,)
-      print self.cmd
+      #print self.cmd
       os.system(self.cmd.encode('utf8'))
 
       Recode.lock.acquire()
