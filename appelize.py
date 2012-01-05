@@ -16,6 +16,7 @@ __revision__ = "0.1"
 import os
 import sys
 import mutagen
+import threading
 from time import sleep
 
 class musicDirectories(object): # {{{
@@ -91,23 +92,43 @@ class musicDirectories(object): # {{{
    def hardwork(self): # {{{
       """hardwork does the hard work, it recodes the files."""
 
+      max_threads = 4
+
+      work_threads = []
 
       for i in self.recode_queue:
          inFile  = os.path.join(self.srcDir,i)
          outFile = os.path.join(self.destDir, '%s.mp3' % os.path.splitext(i)[0])
+
          if not os.path.exists(outFile):
             self.mkDestDir(i)
-            s = Recode(inFile,outFile)
-            s.work()
+            sleep(0.1)
+
+            while Recode.thread_count >= max_threads:
+               sleep(0.1)
+
+            thread = Recode(inFile,outFile)
+            work_threads.append(thread)
+            thread.start()
+
+      for t in work_threads:
+         t.join()
    # }}}
 
 # }}}
 
-class Recode(object): # {{{
+class Recode(threading.Thread): # {{{
    """The actual recoding happens here."""
+
+   thread_count = 0
+   lock = threading.Lock()
+
    def __init__(self, inFile, outFile, outFormat='mp3'): # {{{
       """compiles the command to recode"""
       super(Recode, self).__init__()
+      Recode.lock.acquire()
+      Recode.thread_count += 1
+      Recode.lock.release()
 
       tagTranslate = { # here will be more soon
          'lame' : {
@@ -153,11 +174,17 @@ class Recode(object): # {{{
 
    # }}}
 
-   def work(self): # {{{
+   def run(self): # {{{
       """Do the work: recode the file"""
       print "recoding: %s" % (self.inFile,)
       #print self.cmd
       os.system(self.cmd.encode('utf8'))
+
+      Recode.lock.acquire()
+      Recode.thread_count -= 1
+      Recode.lock.release()
+
+
    # }}}
 
 # }}}
