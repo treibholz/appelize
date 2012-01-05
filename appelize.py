@@ -183,19 +183,22 @@ class Recode(threading.Thread): # {{{
          encoderOpts = { 'lame' : u'-q 0 -V 0 -b 192 -B 320 --quiet -' }
 
          tagOptions = ''
+         # assemble the options for the (id3-)tags
          for i in tags.keys():
             try:
-               tagOptions += u""" %s "%s" """ % ( tagTranslate[encoder[outFormat]][i], re.sub('`','\`',tags[i][0]), )
+               tagOpt = tagTranslate[encoder[outFormat]][i]
+               tag = re.sub('"','\\"',re.sub('`','\`',tags[i][0]))
+               tagOptions += u""" %s "%s" """ % ( tagOpt, tag, )
             except KeyError:
                pass
-         self.cmd = """%s '%s' | %s %s %s '%s' """ % (decoder[inFormat], self.inFile, encoder[outFormat], tagOptions, encoderOpts[encoder[outFormat]], self.outFile, )
+         self.cmd = """%s "%s" | %s %s %s "%s" """ % (decoder[inFormat], self.inFile, encoder[outFormat], tagOptions, encoderOpts[encoder[outFormat]], self.outFile, )
 
    # }}}
 
    def run(self): # {{{
       """Do the work: recode the file"""
       print "recoding: %s" % (self.inFile,)
-      #print self.cmd
+      print self.cmd
       os.system(self.cmd.encode('utf8'))
 
       Recode.lock.acquire()
