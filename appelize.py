@@ -222,7 +222,7 @@ class Recode(threading.Thread): # {{{
    def run(self): # {{{
       """Do the work: recode the file"""
       print "recoding: %s" % (self.inFile,)
-      print self.cmd
+ #     print self.cmd
       os.system(self.cmd.encode('utf8'))
 
       Recode.lock.acquire()
