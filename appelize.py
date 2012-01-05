@@ -11,7 +11,7 @@ At the moment it recodes everything to mp3, but other formats will be
 supported in the future.
 """
 
-__revision__ = "0.1"
+__revision__ = "0.2"
 
 import os
 import sys
@@ -20,15 +20,32 @@ import threading
 from time import sleep
 
 class musicDirectories(object): # {{{
-   """initialize your two directories"""
+   """
+   initialize your two directories
 
-   def __init__(self, srcDir, destDir): # {{{
+   @srcDir      : the source directory, where your free music lives
+   @destDir     : the destination directory, where your non-free music
+                  will live.
+   @max_threads : (optional) the amount of threads you want to start,
+                  default is the amount of cpus found in the system
+                  (or one)
+   """
+
+   def __init__(self, srcDir, destDir, max_threads=False): # {{{
       super(musicDirectories, self).__init__()
 
       self.recodeExtensions = { 'ogg'  : 'mp3',
                                 'flac' :'mp3',
                               }
-      self.maxThreads = 4 
+
+      # if max_threads is not set, set the amount of CPUs. If this is not possible
+      # maybe because it is an old linux or no linux at all, set it to 1.
+      if not max_threads:
+         try:
+            # this is a very primitive way, we need a better method here...
+            self.max_threads = int(open('/sys/devices/system/cpu/possible').readline().strip()[-1])+1
+         except:
+            self.max_threads = 1
 
       self.recode_queue = []
 
@@ -92,8 +109,6 @@ class musicDirectories(object): # {{{
    def hardwork(self): # {{{
       """hardwork does the hard work, it recodes the files."""
 
-      max_threads = 4
-
       work_threads = []
 
       for i in self.recode_queue:
@@ -104,7 +119,7 @@ class musicDirectories(object): # {{{
             self.mkDestDir(i)
             sleep(0.1)
 
-            while Recode.thread_count >= max_threads:
+            while Recode.thread_count >= self.max_threads:
                sleep(0.1)
 
             thread = Recode(inFile,outFile)
@@ -124,7 +139,7 @@ class Recode(threading.Thread): # {{{
    lock = threading.Lock()
 
    def __init__(self, inFile, outFile, outFormat='mp3'): # {{{
-      """compiles the command to recode"""
+      """recode"""
       super(Recode, self).__init__()
       Recode.lock.acquire()
       Recode.thread_count += 1
