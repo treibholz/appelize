@@ -63,6 +63,14 @@ class musicDirectories(object): # {{{
 
    # }}}
 
+   def set_encoder(self,encoder): # {{{
+      """docstring for set_encoder"""
+      if encoder == 'faac':
+         self.recodeExtensions = { 'ogg'  : 'm4a',
+                                   'flac' : 'm4a',
+                                 }
+   # }}}
+
    def checkEncode(self,fileName): # {{{
       """checkEncode checks if a file needs to be recoded or not,
       according to it's file-extension."""
@@ -155,8 +163,17 @@ class Recode(threading.Thread): # {{{
             "title"        : '--tt',
             "date"         : '--ty',
             "genre"        : '--tg',
-            "tracknumber"  : '--tn'
+            "tracknumber"  : '--tn',
+         },
+         'faac' : {
+            "album"        : '--album',
+            "artist"       : '--artist',
+            "title"        : '--title',
+            "date"         : '--year',
+            "genre"        : '--genre',
+            "tracknumber"  : '--track',
          }
+
       }
 
       self.inFile  = re.sub('`','\`',inFile.decode('utf8'))
@@ -180,7 +197,9 @@ class Recode(threading.Thread): # {{{
                       'm4a' :  u'faac',
                    }
 
-         encoderOpts = { 'lame' : u'-q 0 -V 0 -b 192 -B 320 --quiet -' }
+         encoderOpts =  {  'lame' : u'-q 0 -V 0 -b 192 -B 320 --quiet -', 
+                           'faac' : u'-w -s -o ',
+                        }
 
          tagOptions = ''
          # assemble the options for the (id3-)tags
@@ -191,7 +210,13 @@ class Recode(threading.Thread): # {{{
                tagOptions += u""" %s "%s" """ % ( tagOpt, tag, )
             except KeyError:
                pass
-         self.cmd = """%s "%s" | %s %s %s "%s" """ % (decoder[inFormat], self.inFile, encoder[outFormat], tagOptions, encoderOpts[encoder[outFormat]], self.outFile, )
+         
+         if encoder[outFormat] == 'faac':
+            self.cmd = """%s "%s" | %s %s %s "%s" - 2> /dev/null""" % (decoder[inFormat], self.inFile, encoder[outFormat], tagOptions, encoderOpts[encoder[outFormat]], self.outFile, )
+         elif encoder[outFormat] == 'lame':
+            self.cmd = """%s "%s" | %s %s %s "%s" """ % (decoder[inFormat], self.inFile, encoder[outFormat], tagOptions, encoderOpts[encoder[outFormat]], self.outFile, )
+         else:
+            self.cmd = '/bin/false'
 
    # }}}
 
@@ -212,14 +237,18 @@ class Recode(threading.Thread): # {{{
 
 if __name__ == "__main__":
 
-   if len(sys.argv) != 3:
-      print "usage: %s <srcDir> <destDir>"
+   if len(sys.argv) < 3:
+      print "usage: %s <srcDir> <destDir> [lame|faac] (default: lame)"
       sys.exit(1)
    else:
       srcDir = sys.argv[1]
       destDir = sys.argv[2]
 
       m = musicDirectories(srcDir, destDir)
+
+      if len(sys.argv) > 3 :
+         if sys.argv[3].lower() in ('lame', 'faac', ):
+            m.set_encoder(sys.argv[3].lower())
 
       m.easywork()
       m.hardwork()
