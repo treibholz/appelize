@@ -7,8 +7,6 @@ It recodes audio files that don't work in the apple world (like flac and ogg)
 and hardlinks the unknown ones (like mp3, jpeg and so on...). The result is a
 space saving copy of your music.
 
-At the moment it recodes everything to mp3, but other formats will be
-supported in the future.
 """
 
 __revision__ = "0.2"
@@ -35,6 +33,7 @@ class musicDirectories(object): # {{{
    def __init__(self, srcDir, destDir, max_threads=False): # {{{
       super(musicDirectories, self).__init__()
 
+      # default values
       self.recodeExtensions = { 'ogg'  : 'mp3',
                                 'flac' : 'mp3',
                               }
@@ -238,7 +237,7 @@ class Recode(threading.Thread): # {{{
 if __name__ == "__main__":
 
    if len(sys.argv) < 3:
-      print "usage: %s <srcDir> <destDir> [lame|faac] (default: lame)"
+      print "usage: %s <srcDir> <destDir> [lame|faac] (default: lame)" % sys.argv[0]
       sys.exit(1)
    else:
       srcDir = sys.argv[1]
