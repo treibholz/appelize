@@ -4,7 +4,7 @@
 This program "appelizes" your music into a separate directory.
 
 It recodes audio files that don't work in the apple world (like flac and ogg)
-and hardlinks the unknown ones (like mp3, jpeg and so on...). The result is a
+and hardlinks the "unknown" ones (like mp3, jpeg and so on...). The result is a
 space saving copy of your music.
 
 """
@@ -245,11 +245,11 @@ if __name__ == "__main__":
                            epilog='"Unfree your music!"')
    parser.add_option(   "-s", "--source",
                         dest="srcDir",
-                        help="source directory", 
+                        help="source directory (mandatory)", 
                         default=False)
    parser.add_option(   "-d", "--destination",
                         dest="destDir",
-                        help="destination directory",
+                        help="destination directory (mandatory), will be created if not there, has to be on the same device as the source directory!",
                         default=False)
    parser.add_option(   "-e", "--encoder",
                         dest="enc",
@@ -260,16 +260,17 @@ if __name__ == "__main__":
                         type='int',
                         help="Threads to start, default=<number of CPUs>",
                         default=False)
-   parser.add_option(   "--debug",
-                        action='store_true',
-                        dest="debug",
-                        help="Debug mode.")
+#   parser.add_option(   "--debug",
+#                        action='store_true',
+#                        dest="debug",
+#                        help="Debug mode.")
 
    (options, args) = parser.parse_args()
 
    if not options.srcDir and not options.destDir:
       parser.print_help()
-      sys.exit(2)
+      print "\nERROR: no source and/or destination given. I'm not psychic!"
+      sys.exit(255)
 
    m = musicDirectories(options.srcDir, options.destDir, max_threads=options.threads)
 
