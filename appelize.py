@@ -35,6 +35,7 @@ class musicDirectories(object): # {{{
       super(musicDirectories, self).__init__()
 
       # default values
+      # they are separated because one day I want FALC to be recoded to ALAC
       self.recodeExtensions = { 'ogg'  : 'mp3',
                                 'flac' : 'mp3',
                               }
@@ -199,7 +200,7 @@ class Recode(threading.Thread): # {{{
                       'm4a' :  u'faac',
                    }
 
-         encoderOpts =  {  'lame' : u'-q 0 -V 0 -b 192 -B 320 --quiet -',
+         encoderOpts =  {  'lame' : u'-q 0 -V 0 -B 256 --quiet -',
                            'faac' : u'-w -s -o ',
                         }
 
@@ -245,25 +246,26 @@ if __name__ == "__main__":
                            epilog='"Unfree your music!"')
    parser.add_option(   "-s", "--source",
                         dest="srcDir",
-                        help="source directory (mandatory)", 
+                        help="Source directory (mandatory)", 
                         default=False)
    parser.add_option(   "-d", "--destination",
                         dest="destDir",
-                        help="destination directory (mandatory), will be created if not there, has to be on the same device as the source directory!",
+                        help="Destination directory (mandatory), will be created if not there, has to be on the same device as the source directory!",
                         default=False)
    parser.add_option(   "-e", "--encoder",
                         dest="enc",
-                        help='The encoder to use "lame" (mp3) or "faac" (m4a), default="lame"',
+                        help='The encoder to use, "lame" (256kbit/s VBR mp3) or "faac" (VBR m4a with maximum quality ). You need "lame" and/or "faac" in your $PATH. default="lame"',
                         default='lame')
    parser.add_option(   "-t", "--threads",
                         dest="threads",
                         type='int',
-                        help="Threads to start, default=<number of CPUs>",
+                        help="Threads to start, default=<number of CPUs or 1>",
                         default=False)
-#   parser.add_option(   "--debug",
-#                        action='store_true',
-#                        dest="debug",
-#                        help="Debug mode.")
+   parser.add_option(   "--no-ogg",
+                        action='store_true',
+                        default=False,
+                        dest="no_ogg",
+                        help="don't recode OGG, only FLAC.")
 
    (options, args) = parser.parse_args()
 
@@ -276,11 +278,10 @@ if __name__ == "__main__":
 
    m.set_encoder(options.enc.lower())
 
+   if options.no_ogg:
+      m.recodeExtensions.pop('ogg')
 
    m.easywork()
    m.hardwork()
-
-
-
 
 # vim:foldmethod=marker:tabstop=3:autoindent:shiftwidth=3:expandtab

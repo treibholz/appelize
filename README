@@ -1,9 +1,28 @@
 This program "appelizes" your music into a separate directory.
 
-It recodes audio files that don't work in the apple world (like flac and ogg)
+It recodes audio files that don't work in the Apple world (like FLAC and OGG)
 and hardlinks the unknown ones (like mp3, jpeg and so on...). The result is a
 space saving copy of your music.
 
-At the moment it recodes everything to mp3, but other formats will be
-supported in the future.
+In fact, it's also quite usefull for other mobile device with limited space
+(e.g. android phone or notebook with an expensive SSD) or limited capabilities
+(e.g. Car HiFi devices or cheap mp3 players).
+
+It recodes all FLACs and OGGs to either mp3 or m4a (AAC).
+
+
+
+Here is another example of how you might use it:
+
+# appelize -s ~/Music -d ~/.androidmusic/ --no-ogg 
+# appelize -s ~/.androidmusic/ ~/.applemusic -e faac
+
+After this you have two new directories:
+
+~/.androidmusic contains hardlinks of everything but your FLAC-Files, which
+are now encoded to mp3
+
+~/.applemusic contains hardlinks to the upper, except all your OGGs, which
+are now recoded to m4a.
+
 
