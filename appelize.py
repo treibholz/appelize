@@ -9,7 +9,7 @@ space saving copy of your music.
 
 """
 
-__revision__ = "0.2"
+__revision__ = "0.3"
 
 import os
 import re
@@ -17,6 +17,7 @@ import sys
 import mutagen
 import threading
 from time import sleep
+from optparse import OptionParser
 
 class musicDirectories(object): # {{{
    """
@@ -46,6 +47,8 @@ class musicDirectories(object): # {{{
             self.max_threads = int(open('/sys/devices/system/cpu/possible').readline().strip()[-1])+1
          except:
             self.max_threads = 1
+      else:
+         self.max_threads=max_threads
 
       self.recode_queue = []
 
@@ -196,7 +199,7 @@ class Recode(threading.Thread): # {{{
                       'm4a' :  u'faac',
                    }
 
-         encoderOpts =  {  'lame' : u'-q 0 -V 0 -b 192 -B 320 --quiet -', 
+         encoderOpts =  {  'lame' : u'-q 0 -V 0 -b 192 -B 320 --quiet -',
                            'faac' : u'-w -s -o ',
                         }
 
@@ -209,7 +212,7 @@ class Recode(threading.Thread): # {{{
                tagOptions += u""" %s "%s" """ % ( tagOpt, tag, )
             except KeyError:
                pass
-         
+
          if encoder[outFormat] == 'faac':
             self.cmd = """%s "%s" | %s %s %s "%s" - 2> /dev/null""" % (decoder[inFormat], self.inFile, encoder[outFormat], tagOptions, encoderOpts[encoder[outFormat]], self.outFile, )
          elif encoder[outFormat] == 'lame':
@@ -236,21 +239,45 @@ class Recode(threading.Thread): # {{{
 
 if __name__ == "__main__":
 
-   if len(sys.argv) < 3:
-      print "usage: %s <srcDir> <destDir> [lame|faac] (default: lame)" % sys.argv[0]
-      sys.exit(1)
-   else:
-      srcDir = sys.argv[1]
-      destDir = sys.argv[2]
+   parser = OptionParser(  "%prog <options>",
+                           version=__revision__,
+                           description="appelizes your music in a space-saving way.",
+                           epilog='"Unfree your music!"')
+   parser.add_option(   "-s", "--source",
+                        dest="srcDir",
+                        help="source directory", 
+                        default=False)
+   parser.add_option(   "-d", "--destination",
+                        dest="destDir",
+                        help="destination directory",
+                        default=False)
+   parser.add_option(   "-e", "--encoder",
+                        dest="enc",
+                        help='The encoder to use "lame" (mp3) or "faac" (m4a), default="lame"',
+                        default='lame')
+   parser.add_option(   "-t", "--threads",
+                        dest="threads",
+                        type='int',
+                        help="Threads to start, default=<number of CPUs>",
+                        default=False)
+   parser.add_option(   "--debug",
+                        action='store_true',
+                        dest="debug",
+                        help="Debug mode.")
 
-      m = musicDirectories(srcDir, destDir)
+   (options, args) = parser.parse_args()
 
-      if len(sys.argv) > 3 :
-         if sys.argv[3].lower() in ('lame', 'faac', ):
-            m.set_encoder(sys.argv[3].lower())
+   if not options.srcDir and not options.destDir:
+      parser.print_help()
+      sys.exit(2)
 
-      m.easywork()
-      m.hardwork()
+   m = musicDirectories(options.srcDir, options.destDir, max_threads=options.threads)
+
+   m.set_encoder(options.enc.lower())
+
+
+   m.easywork()
+   m.hardwork()
 
 
 
