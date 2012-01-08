@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-from distutils import setup
+from distutils.core import setup as _setup
 
 if __name__ == '__main__':
-    setup(
+    _setup(
         name = 'appelize',
         version = '0.3',
         description = 'This program "appelizes" your music into a separate directory.',
