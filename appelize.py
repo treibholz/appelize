@@ -167,6 +167,7 @@ class Recode(threading.Thread): # {{{
             "date"         : '--ty',
             "genre"        : '--tg',
             "tracknumber"  : '--tn',
+            "comment"      : '--tc',
          },
          'faac' : {
             "album"        : '--album',
@@ -175,6 +176,7 @@ class Recode(threading.Thread): # {{{
             "date"         : '--year',
             "genre"        : '--genre',
             "tracknumber"  : '--track',
+            "comment"      : '--comment',
          }
 
       }
