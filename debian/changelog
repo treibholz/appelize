@@ -1,3 +1,9 @@
+appelize (0.3.1-1) unstable; urgency=low
+
+  * new release 
+
+ -- Klaus Umbach <klaus-debian@uxix.de>  Sun, 08 Jan 2012 16:40:33 +0100
+
 appelize (0.3-2) unstable; urgency=low
 
   * adjusted docs.
