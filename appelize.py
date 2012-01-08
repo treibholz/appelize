@@ -19,6 +19,35 @@ import threading
 from time import sleep
 from optparse import OptionParser
 
+class Debug(object): # {{{
+   """simple colored debug printing"""
+
+   #  don't need more colors
+   RED      = '\033[0;31m'
+   GREEN    = '\033[0;32m'
+   YELLOW   = '\033[0;33m'
+   BLUE     = '\033[0;34m'
+
+   BOLDRED      = '\033[1;31m'
+   BOLDGREEN    = '\033[1;32m'
+   BOLDYELLOW   = '\033[1;33m'
+   BOLDBLUE     = '\033[1;34m'
+
+
+   def __init__(self, enabled=False):
+      super(Debug, self).__init__()
+      self.enabled = enabled
+
+   def Print(self,text,color=''):
+      """docstring for print"""
+      if self.enabled:
+         print '%s%s%s' % (color, text, '\033[m', )
+      else:
+         pass
+
+# }}}
+
+
 class musicDirectories(object): # {{{
    """
    initialize your two directories
@@ -31,8 +60,10 @@ class musicDirectories(object): # {{{
                   (or one)
    """
 
-   def __init__(self, srcDir, destDir, max_threads=False): # {{{
+   def __init__(self, srcDir, destDir, max_threads=False, debug=False): # {{{
       super(musicDirectories, self).__init__()
+      self.__debug = Debug(debug)
+
 
       # default values
       # they are separated because one day I want FALC to be recoded to ALAC
@@ -136,7 +167,7 @@ class musicDirectories(object): # {{{
             while Recode.thread_count >= self.max_threads:
                sleep(0.1)
 
-            thread = Recode(inFile,outFile,destExt)
+            thread = Recode(inFile,outFile,destExt,debug=self.__debug.enabled)
             work_threads.append(thread)
             thread.start()
 
@@ -152,8 +183,9 @@ class Recode(threading.Thread): # {{{
    thread_count = 0
    lock = threading.Lock()
 
-   def __init__(self, inFile, outFile, outFormat='mp3'): # {{{
+   def __init__(self, inFile, outFile, outFormat='mp3', debug=False): # {{{
       """recode"""
+      self.__debug = Debug(debug)
       super(Recode, self).__init__()
       Recode.lock.acquire()
       Recode.thread_count += 1
@@ -181,7 +213,9 @@ class Recode(threading.Thread): # {{{
 
       }
 
-      self.inFile  = re.sub('`','\`',inFile.decode('utf8'))
+      self.__debug.Print('Recode.__init__.inFile: %s' % inFile , Debug.RED) 
+      self.inFile  = re.sub('`','\`',inFile.encode('utf8').decode('utf8'))
+      self.__debug.Print('Recode.__init__.ouFile: %s' % outFile , Debug.YELLOW) 
       self.outFile = re.sub('`','\`',outFile.decode('utf8'))
 
       # read the tags from the file
@@ -228,7 +262,7 @@ class Recode(threading.Thread): # {{{
    def run(self): # {{{
       """Do the work: recode the file"""
       print "recoding: %s" % (self.inFile,)
- #     print self.cmd
+      self.__debug.Print(self.cmd,Debug.RED)
       os.system(self.cmd.encode('utf8'))
 
       Recode.lock.acquire()
@@ -268,6 +302,12 @@ if __name__ == "__main__":
                         default=False,
                         dest="no_ogg",
                         help="don't recode OGG, only FLAC.")
+   parser.add_option(   "--debug",
+                        action='store_true',
+                        default=False,
+                        dest="debug",
+                        help="debug mode, print out some useless stuff.")
+
 
    (options, args) = parser.parse_args()
 
@@ -276,7 +316,7 @@ if __name__ == "__main__":
       print "\nERROR: no source and/or destination given. I'm not psychic!"
       sys.exit(255)
 
-   m = musicDirectories(options.srcDir, options.destDir, max_threads=options.threads)
+   m = musicDirectories(options.srcDir, options.destDir, max_threads=options.threads, debug=options.debug)
 
    m.set_encoder(options.enc.lower())
 
