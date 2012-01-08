@@ -213,10 +213,11 @@ class Recode(threading.Thread): # {{{
 
       }
 
-      self.__debug.Print('Recode.__init__.inFile: %s' % inFile , Debug.RED) 
-      self.inFile  = re.sub('`','\`',inFile.encode('utf8').decode('utf8'))
-      self.__debug.Print('Recode.__init__.ouFile: %s' % outFile , Debug.YELLOW) 
-      self.outFile = re.sub('`','\`',outFile.decode('utf8'))
+      self.__debug.Print('Recode.__init__ :: inFile: %s' % inFile , Debug.RED)
+      self.inFile  = re.sub('`', '\`', unicode(inFile, 'utf8'))
+
+      self.__debug.Print('Recode.__init__ :: ouFile: %s' % outFile , Debug.YELLOW)
+      self.outFile = re.sub('`', '\`', outFile.decode('utf8'))
 
       # read the tags from the file
       tags = mutagen.File(inFile)
@@ -262,7 +263,7 @@ class Recode(threading.Thread): # {{{
    def run(self): # {{{
       """Do the work: recode the file"""
       print "recoding: %s" % (self.inFile,)
-      self.__debug.Print(self.cmd,Debug.RED)
+      self.__debug.Print('Recode.run :: self.cmd: %s' % (self.cmd, ) ,Debug.BLUE)
       os.system(self.cmd.encode('utf8'))
 
       Recode.lock.acquire()
@@ -282,7 +283,7 @@ if __name__ == "__main__":
                            epilog='"Unfree your music!"')
    parser.add_option(   "-s", "--source",
                         dest="srcDir",
-                        help="Source directory (mandatory)", 
+                        help="Source directory (mandatory)",
                         default=False)
    parser.add_option(   "-d", "--destination",
                         dest="destDir",
@@ -306,7 +307,7 @@ if __name__ == "__main__":
                         action='store_true',
                         default=False,
                         dest="debug",
-                        help="debug mode, print out some useless stuff.")
+                        help="debug mode, print out some colored useless stuff")
 
 
    (options, args) = parser.parse_args()
