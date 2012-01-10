@@ -69,6 +69,7 @@ class musicDirectories(object): # {{{
       # they are separated because one day I want FALC to be recoded to ALAC
       self.recodeExtensions = { 'ogg'  : 'mp3',
                                 'flac' : 'mp3',
+                                'm3u'  : False,
                               }
 
       # if max_threads is not set, set the amount of CPUs. If this is not possible
@@ -102,7 +103,14 @@ class musicDirectories(object): # {{{
       if encoder == 'faac':
          self.recodeExtensions = { 'ogg'  : 'm4a',
                                    'flac' : 'm4a',
+                                   'm3u'  : False,
                                  }
+      elif encoder == 'lame':
+         self.recodeExtensions = { 'ogg'  : 'm4a',
+                                   'flac' : 'm4a',
+                                   'm3u'  : False,
+                                 }
+
    # }}}
 
    def checkEncode(self,fileName): # {{{
@@ -158,22 +166,48 @@ class musicDirectories(object): # {{{
          inFile  = os.path.join(self.srcDir,i)
          # get the extension of the outfile
          destExt = self.recodeExtensions[os.path.splitext(i)[1][1:]]
-         outFile = os.path.join(self.destDir, '%s.%s' % (os.path.splitext(i)[0], destExt,) )
 
-         if not os.path.exists(outFile):
-            self.mkDestDir(i)
-            sleep(0.1)
+         if destExt:
+            outFile = os.path.join(self.destDir, '%s.%s' % (os.path.splitext(i)[0], destExt,) )
 
-            while Recode.thread_count >= self.max_threads:
+            if not os.path.exists(outFile):
+               self.mkDestDir(i)
                sleep(0.1)
 
-            thread = Recode(inFile,outFile,destExt,debug=self.__debug.enabled)
-            work_threads.append(thread)
-            thread.start()
+               while Recode.thread_count >= self.max_threads:
+                  sleep(0.1)
+
+               thread = Recode(inFile,outFile,destExt,debug=self.__debug.enabled)
+               work_threads.append(thread)
+               thread.start()
+
+         # if no destExt is defined, the filename will stay as it is and we
+         # will do something else, like changing an m3u or just nothing.
+         else:
+            outFile = os.path.join(self.destDir, i )
+
+            # m3u
+            if os.path.splitext(i)[1] == '.m3u':
+               self.rewrite_m3u(inFile, outFile)
+
 
       for t in work_threads:
          t.join()
    # }}}
+
+   def rewrite_m3u(self, inFile, outFile):
+      """docstring for rewrite_m3u"""
+
+      if not os.path.exists(outFile):
+         print "rewriting m3u: %s" % inFile
+         f = open(inFile).read()
+         for i in self.recodeExtensions:
+            if self.recodeExtensions[i]:
+               f = re.sub(r'\.%s' % i, r'.%s' % self.recodeExtensions[i], f)
+               self.__debug.Print(f, Debug.GREEN)
+         fout = open(outFile, 'w')
+         fout.write(f)
+         fout.close()
 
 # }}}
 
@@ -312,7 +346,7 @@ if __name__ == "__main__":
 
    (options, args) = parser.parse_args()
 
-   if not options.srcDir and not options.destDir:
+   if not options.srcDir or not options.destDir:
       parser.print_help()
       print "\nERROR: no source and/or destination given. I'm not psychic!"
       sys.exit(255)
