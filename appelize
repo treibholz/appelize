@@ -66,7 +66,7 @@ class musicDirectories(object): # {{{
 
 
       # default values
-      # they are separated because one day I want FALC to be recoded to ALAC
+      # they are separated because one day I want FLAC to be recoded to ALAC
       self.recodeExtensions = { 'ogg'  : 'mp3',
                                 'flac' : 'mp3',
                                 'm3u'  : False,
@@ -195,7 +195,7 @@ class musicDirectories(object): # {{{
          t.join()
    # }}}
 
-   def rewrite_m3u(self, inFile, outFile):
+   def rewrite_m3u(self, inFile, outFile): # {{{
       """docstring for rewrite_m3u"""
 
       if not os.path.exists(outFile):
@@ -208,6 +208,8 @@ class musicDirectories(object): # {{{
          fout = open(outFile, 'w')
          fout.write(f)
          fout.close()
+
+    # }}}}
 
 # }}}
 
