@@ -13,6 +13,9 @@ In fact, it's also quite usefull for other mobile device with limited space
 
 It recodes all FLACs and OGGs to either mp3 or m4a (AAC).
 
+One of the design goals is, to have an intuitive userfriendly and simple
+command line user interface.
+
 simple example:
 ---------------
 
