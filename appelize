@@ -327,7 +327,7 @@ if __name__ == "__main__":
                         default=False)
    parser.add_option(   "-e", "--encoder",
                         dest="enc",
-                        help='The encoder to use, "lame" (256kbit/s VBR mp3) or "faac" (VBR m4a with maximum quality ). You need "lame" and/or "faac" in your $PATH. default="lame"',
+                        help='The encoder to use, "lame" (256kbit/s VBR mp3) or "faac" (VBR m4a with maximum quality). You need "lame" and/or "faac" in your $PATH. default="lame"',
                         default='lame')
    parser.add_option(   "-t", "--threads",
                         dest="threads",
