@@ -9,7 +9,7 @@ space saving copy of your music.
 
 """
 
-__revision__ = "0.3.1"
+__revision__ = "0.3.2"
 
 import os
 import re
