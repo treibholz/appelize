@@ -16,7 +16,7 @@ It recodes all FLACs and OGGs to either mp3 or m4a (AAC).
 simple example:
 ---------------
 
-    $ appelize -s ~/Music ~/Applemusic
+    $ appelize -s ~/Music -d ~/Applemusic
 
 
 Now wait and watch your CPU(s) get hot! When it's done, all files in ~/Music
