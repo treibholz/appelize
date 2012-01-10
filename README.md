@@ -1,7 +1,7 @@
 Appelize
 ========
 
-This program "appelizes" your music into a separate directory.
+This program "appelizes" your music collection into a separate directory.
 
 It recodes audio files that don't work in the Apple world (like FLAC and OGG)
 and hardlinks the unknown ones (like mp3, jpeg and so on...). The result is a
