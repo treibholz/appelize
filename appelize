@@ -20,347 +20,347 @@ from time import sleep
 from optparse import OptionParser
 
 class Debug(object): # {{{
-   """simple colored debug printing"""
+	"""simple colored debug printing"""
 
-   #  don't need more colors
-   RED      = '\033[0;31m'
-   GREEN    = '\033[0;32m'
-   YELLOW   = '\033[0;33m'
-   BLUE     = '\033[0;34m'
+	#  don't need more colors
+	RED      = '\033[0;31m'
+	GREEN    = '\033[0;32m'
+	YELLOW   = '\033[0;33m'
+	BLUE     = '\033[0;34m'
 
-   BOLDRED      = '\033[1;31m'
-   BOLDGREEN    = '\033[1;32m'
-   BOLDYELLOW   = '\033[1;33m'
-   BOLDBLUE     = '\033[1;34m'
+	BOLDRED      = '\033[1;31m'
+	BOLDGREEN    = '\033[1;32m'
+	BOLDYELLOW   = '\033[1;33m'
+	BOLDBLUE     = '\033[1;34m'
 
 
-   def __init__(self, enabled=False):
-      super(Debug, self).__init__()
-      self.enabled = enabled
+	def __init__(self, enabled=False):
+		super(Debug, self).__init__()
+		self.enabled = enabled
 
-   def Print(self,text,color=''):
-      """docstring for print"""
-      if self.enabled:
-         print '%s%s%s' % (color, text, '\033[m', )
-      else:
-         pass
+	def Print(self,text,color=''):
+		"""docstring for print"""
+		if self.enabled:
+			print '%s%s%s' % (color, text, '\033[m', )
+		else:
+			pass
 
 # }}}
 
 
 class musicDirectories(object): # {{{
-   """
-   initialize your two directories
+	"""
+	initialize your two directories
 
-   @srcDir      : the source directory, where your free music lives
-   @destDir     : the destination directory, where your non-free music
-                  will live.
-   @max_threads : (optional) the amount of threads you want to start,
-                  default is the amount of cpus found in the system
-                  (or one)
-   """
+	@srcDir      : the source directory, where your free music lives
+	@destDir     : the destination directory, where your non-free music
+						will live.
+	@max_threads : (optional) the amount of threads you want to start,
+						default is the amount of cpus found in the system
+						(or one)
+	"""
 
-   def __init__(self, srcDir, destDir, max_threads=False, debug=False): # {{{
-      super(musicDirectories, self).__init__()
-      self.__debug = Debug(debug)
-
-
-      # default values
-      # they are separated because one day I want FLAC to be recoded to ALAC
-      self.recodeExtensions = { 'ogg'  : 'mp3',
-                                'flac' : 'mp3',
-                                'm3u'  : False,
-                              }
-
-      # if max_threads is not set, set the amount of CPUs. If this is not possible
-      # maybe because it is an old linux or no linux at all, set it to 1.
-      if not max_threads:
-         try:
-            # this is a very primitive way, we need a better method here...
-            self.max_threads = int(open('/sys/devices/system/cpu/possible').readline().strip()[-1])+1
-         except:
-            self.max_threads = 1
-      else:
-         self.max_threads=max_threads
-
-      self.recode_queue = []
-
-      # expand the directories
-      self.srcDir = os.path.abspath(os.path.expanduser(srcDir))
-      self.destDir = os.path.abspath(os.path.expanduser(destDir))
-
-      # FIXME: check if the direcories are on the same filesystem and if
-      # it supports hardlinks
-
-      # generate the filelist
-      findCmd = 'find "%s" -type f' % self.srcDir
-      self.fileList = [ x.strip()[len(self.srcDir)+1:] for x in os.popen(findCmd).readlines() ]
-
-   # }}}
-
-   def set_encoder(self,encoder): # {{{
-      """docstring for set_encoder"""
-      if encoder == 'faac':
-         self.recodeExtensions = { 'ogg'  : 'm4a',
-                                   'flac' : 'm4a',
-                                   'm3u'  : False,
-                                 }
-      elif encoder == 'lame':
-         self.recodeExtensions = { 'ogg'  : 'm4a',
-                                   'flac' : 'm4a',
-                                   'm3u'  : False,
-                                 }
-
-   # }}}
-
-   def checkEncode(self,fileName): # {{{
-      """checkEncode checks if a file needs to be recoded or not,
-      according to it's file-extension."""
-      ext = os.path.splitext(fileName)[1][1:].lower()
-      if ext in self.recodeExtensions:
-         return ext
-      else:
-         return False
-   # }}}
-
-   def add_to_recode_queue(self,filename): # {{{
-      """add a file to the recode_queue"""
-      self.recode_queue.append(filename)
-   # }}}
-
-   def hardLink(self,filename): # {{{
-      """hardlinks a file, if it isn't there yet."""
-      dest = os.path.join(self.destDir,filename)
-      if not os.path.exists(dest):
-         src = os.path.join(self.srcDir,filename)
-         os.link(src,dest)
-   # }}}
-
-   def mkDestDir(self,filename): # {{{
-      """creates the destination directory"""
-      destDir = os.path.join(self.destDir,os.path.dirname(filename))
-      if not os.path.exists(destDir):
-         os.makedirs(destDir)
-   # }}}
-
-   def easywork(self): # {{{
-      """easywork walks through the filelist and checks whether they
-      need to be recoded or not. If they don't need to be recoded, it
-      sets the hardlink, otherwise it adds them to the recode queue.
-      This is the easy part."""
-
-      for i in self.fileList:
-         self.mkDestDir(i)
-         if self.checkEncode(i):
-            self.add_to_recode_queue(i)
-         else:
-            self.hardLink(i)
-   # }}}
-
-   def hardwork(self): # {{{
-      """hardwork does the hard work, it recodes the files."""
-
-      work_threads = []
-
-      for i in self.recode_queue:
-         inFile  = os.path.join(self.srcDir,i)
-         # get the extension of the outfile
-         destExt = self.recodeExtensions[os.path.splitext(i)[1][1:]]
-
-         if destExt:
-            outFile = os.path.join(self.destDir, '%s.%s' % (os.path.splitext(i)[0], destExt,) )
-
-            if not os.path.exists(outFile):
-               self.mkDestDir(i)
-               sleep(0.1)
-
-               while Recode.thread_count >= self.max_threads:
-                  sleep(0.1)
-
-               thread = Recode(inFile,outFile,destExt,debug=self.__debug.enabled)
-               work_threads.append(thread)
-               thread.start()
-
-         # if no destExt is defined, the filename will stay as it is and we
-         # will do something else, like changing an m3u or just nothing.
-         else:
-            outFile = os.path.join(self.destDir, i )
-
-            # m3u
-            if os.path.splitext(i)[1] == '.m3u':
-               self.rewrite_m3u(inFile, outFile)
+	def __init__(self, srcDir, destDir, max_threads=False, debug=False): # {{{
+		super(musicDirectories, self).__init__()
+		self.__debug = Debug(debug)
 
 
-      for t in work_threads:
-         t.join()
-   # }}}
+		# default values
+		# they are separated because one day I want FLAC to be recoded to ALAC
+		self.recodeExtensions = {   'ogg'  : 'mp3',
+                                    'flac' : 'mp3',
+                                    'm3u'  : False,
+                                }
 
-   def rewrite_m3u(self, inFile, outFile): # {{{
-      """docstring for rewrite_m3u"""
+		# if max_threads is not set, set the amount of CPUs. If this is not possible
+		# maybe because it is an old linux or no linux at all, set it to 1.
+		if not max_threads:
+			try:
+				# this is a very primitive way, we need a better method here...
+				self.max_threads = int(open('/sys/devices/system/cpu/possible').readline().strip()[-1])+1
+			except:
+				self.max_threads = 1
+		else:
+			self.max_threads=max_threads
 
-      if not os.path.exists(outFile):
-         print "rewriting m3u: %s" % inFile
-         f = open(inFile).read()
-         for i in self.recodeExtensions:
-            if self.recodeExtensions[i]:
-               f = re.sub(r'\.%s' % i, r'.%s' % self.recodeExtensions[i], f)
-               self.__debug.Print(f, Debug.GREEN)
-         fout = open(outFile, 'w')
-         fout.write(f)
-         fout.close()
+		self.recode_queue = []
 
-    # }}}}
+		# expand the directories
+		self.srcDir = os.path.abspath(os.path.expanduser(srcDir))
+		self.destDir = os.path.abspath(os.path.expanduser(destDir))
+
+		# FIXME: check if the direcories are on the same filesystem and if
+		# it supports hardlinks
+
+		# generate the filelist
+		findCmd = 'find "%s" -type f' % self.srcDir
+		self.fileList = [ x.strip()[len(self.srcDir)+1:] for x in os.popen(findCmd).readlines() ]
+
+	# }}}
+
+	def set_encoder(self,encoder): # {{{
+		"""docstring for set_encoder"""
+		if encoder == 'faac':
+			self.recodeExtensions = {   'ogg'  : 'm4a',
+                                        'flac' : 'm4a',
+                                        'm3u'  : False,
+                                    }
+		elif encoder == 'lame':
+			self.recodeExtensions = {   'ogg'  : 'm4a',
+                                        'flac' : 'm4a',
+                                        'm3u'  : False,
+                                    }
+
+	# }}}
+
+	def checkEncode(self,fileName): # {{{
+		"""checkEncode checks if a file needs to be recoded or not,
+		according to it's file-extension."""
+		ext = os.path.splitext(fileName)[1][1:].lower()
+		if ext in self.recodeExtensions:
+			return ext
+		else:
+			return False
+	# }}}
+
+	def add_to_recode_queue(self,filename): # {{{
+		"""add a file to the recode_queue"""
+		self.recode_queue.append(filename)
+	# }}}
+
+	def hardLink(self,filename): # {{{
+		"""hardlinks a file, if it isn't there yet."""
+		dest = os.path.join(self.destDir,filename)
+		if not os.path.exists(dest):
+			src = os.path.join(self.srcDir,filename)
+			os.link(src,dest)
+	# }}}
+
+	def mkDestDir(self,filename): # {{{
+		"""creates the destination directory"""
+		destDir = os.path.join(self.destDir,os.path.dirname(filename))
+		if not os.path.exists(destDir):
+			os.makedirs(destDir)
+	# }}}
+
+	def easywork(self): # {{{
+		"""easywork walks through the filelist and checks whether they
+		need to be recoded or not. If they don't need to be recoded, it
+		sets the hardlink, otherwise it adds them to the recode queue.
+		This is the easy part."""
+
+		for i in self.fileList:
+			self.mkDestDir(i)
+			if self.checkEncode(i):
+				self.add_to_recode_queue(i)
+			else:
+				self.hardLink(i)
+	# }}}
+
+	def hardwork(self): # {{{
+		"""hardwork does the hard work, it recodes the files."""
+
+		work_threads = []
+
+		for i in self.recode_queue:
+			inFile  = os.path.join(self.srcDir,i)
+			# get the extension of the outfile
+			destExt = self.recodeExtensions[os.path.splitext(i)[1][1:]]
+
+			if destExt:
+				outFile = os.path.join(self.destDir, '%s.%s' % (os.path.splitext(i)[0], destExt,) )
+
+				if not os.path.exists(outFile):
+					self.mkDestDir(i)
+					sleep(0.1)
+
+					while Recode.thread_count >= self.max_threads:
+						sleep(0.1)
+
+					thread = Recode(inFile,outFile,destExt,debug=self.__debug.enabled)
+					work_threads.append(thread)
+					thread.start()
+
+			# if no destExt is defined, the filename will stay as it is and we
+			# will do something else, like changing an m3u or just nothing.
+			else:
+				outFile = os.path.join(self.destDir, i )
+
+				# m3u
+				if os.path.splitext(i)[1] == '.m3u':
+					self.rewrite_m3u(inFile, outFile)
+
+
+		for t in work_threads:
+			t.join()
+	# }}}
+
+	def rewrite_m3u(self, inFile, outFile): # {{{
+		"""docstring for rewrite_m3u"""
+
+		if not os.path.exists(outFile):
+			print "rewriting m3u: %s" % inFile
+			f = open(inFile).read()
+			for i in self.recodeExtensions:
+				if self.recodeExtensions[i]:
+					f = re.sub(r'\.%s' % i, r'.%s' % self.recodeExtensions[i], f)
+					self.__debug.Print(f, Debug.GREEN)
+			fout = open(outFile, 'w')
+			fout.write(f)
+			fout.close()
+
+    # }}}
 
 # }}}
 
 class Recode(threading.Thread): # {{{
-   """The actual recoding happens here."""
+	"""The actual recoding happens here."""
 
-   thread_count = 0
-   lock = threading.Lock()
+	thread_count = 0
+	lock = threading.Lock()
 
-   def __init__(self, inFile, outFile, outFormat='mp3', debug=False): # {{{
-      """recode"""
-      self.__debug = Debug(debug)
-      super(Recode, self).__init__()
-      Recode.lock.acquire()
-      Recode.thread_count += 1
-      Recode.lock.release()
+	def __init__(self, inFile, outFile, outFormat='mp3', debug=False): # {{{
+		"""recode"""
+		self.__debug = Debug(debug)
+		super(Recode, self).__init__()
+		Recode.lock.acquire()
+		Recode.thread_count += 1
+		Recode.lock.release()
 
-      tagTranslate = { # here will be more soon
-         'lame' : {
-            "album"        : '--tl',
-            "artist"       : '--ta',
-            "title"        : '--tt',
-            "date"         : '--ty',
-            "genre"        : '--tg',
-            "tracknumber"  : '--tn',
-            "comment"      : '--tc',
-         },
-         'faac' : {
-            "album"        : '--album',
-            "artist"       : '--artist',
-            "title"        : '--title',
-            "date"         : '--year',
-            "genre"        : '--genre',
-            "tracknumber"  : '--track',
-            "comment"      : '--comment',
-         }
+		tagTranslate = { # here will be more soon
+			'lame' : {
+				"album"        : '--tl',
+				"artist"       : '--ta',
+				"title"        : '--tt',
+				"date"         : '--ty',
+				"genre"        : '--tg',
+				"tracknumber"  : '--tn',
+				"comment"      : '--tc',
+			},
+			'faac' : {
+				"album"        : '--album',
+				"artist"       : '--artist',
+				"title"        : '--title',
+				"date"         : '--year',
+				"genre"        : '--genre',
+				"tracknumber"  : '--track',
+				"comment"      : '--comment',
+			}
 
-      }
+		}
 
-      self.__debug.Print('Recode.__init__ :: inFile: %s' % inFile , Debug.RED)
-      self.inFile  = re.sub('`', '\`', unicode(inFile, 'utf8'))
+		self.__debug.Print('Recode.__init__ :: inFile: %s' % inFile , Debug.RED)
+		self.inFile  = re.sub('`', '\`', unicode(inFile, 'utf8'))
 
-      self.__debug.Print('Recode.__init__ :: ouFile: %s' % outFile , Debug.YELLOW)
-      self.outFile = re.sub('`', '\`', outFile.decode('utf8'))
+		self.__debug.Print('Recode.__init__ :: ouFile: %s' % outFile , Debug.YELLOW)
+		self.outFile = re.sub('`', '\`', outFile.decode('utf8'))
 
-      # read the tags from the file
-      tags = mutagen.File(inFile)
-      if tags == None:
-         print "%s has no readable tags"  % (inFile, )
-         self.cmd='/bin/true'
-      else:
+		# read the tags from the file
+		tags = mutagen.File(inFile)
+		if tags == None:
+			print "%s has no readable tags"  % (inFile, )
+			self.cmd='/bin/true'
+		else:
 
-         # get the format according to the extension (cheap!)
-         inFormat = os.path.splitext(inFile)[1][1:].lower()
+			# get the format according to the extension (cheap!)
+			inFormat = os.path.splitext(inFile)[1][1:].lower()
 
-         decoder = {  'flac'   : u'flac --silent --stdout --decode ',
-                      'ogg'    : u'oggdec --quiet --output=- ',
-                   }
-
-         encoder = {  'mp3' :  u'lame',
-                      'm4a' :  u'faac',
-                   }
-
-         encoderOpts =  {  'lame' : u'-q 0 -V 0 -B 256 --quiet -',
-                           'faac' : u'-w -s -o ',
+			decoder =   {   'flac'   : u'flac --silent --stdout --decode ',
+                            'ogg'    : u'oggdec --quiet --output=- ',
                         }
 
-         tagOptions = ''
-         # assemble the options for the (id3-)tags
-         for i in tags.keys():
-            try:
-               tagOpt = tagTranslate[encoder[outFormat]][i]
-               tag = re.sub('"','\\"',re.sub('`','\`',tags[i][0]))
-               tagOptions += u""" %s "%s" """ % ( tagOpt, tag, )
-            except KeyError:
-               pass
+			encoder =   {   'mp3' :  u'lame',
+                            'm4a' :  u'faac',
+						}
 
-         if encoder[outFormat] == 'faac':
-            self.cmd = """%s "%s" | %s %s %s "%s" - 2> /dev/null""" % (decoder[inFormat], self.inFile, encoder[outFormat], tagOptions, encoderOpts[encoder[outFormat]], self.outFile, )
-         elif encoder[outFormat] == 'lame':
-            self.cmd = """%s "%s" | %s %s %s "%s" """ % (decoder[inFormat], self.inFile, encoder[outFormat], tagOptions, encoderOpts[encoder[outFormat]], self.outFile, )
-         else:
-            self.cmd = '/bin/false'
+			encoderOpts =  {  'lame' : u'-q 0 -V 0 -B 256 --quiet -',
+									'faac' : u'-w -s -o ',
+								}
 
-   # }}}
+			tagOptions = ''
+			# assemble the options for the (id3-)tags
+			for i in tags.keys():
+				try:
+					tagOpt = tagTranslate[encoder[outFormat]][i]
+					tag = re.sub('"','\\"',re.sub('`','\`',tags[i][0]))
+					tagOptions += u""" %s "%s" """ % ( tagOpt, tag, )
+				except KeyError:
+					pass
 
-   def run(self): # {{{
-      """Do the work: recode the file"""
-      print "recoding: %s" % (self.inFile,)
-      self.__debug.Print('Recode.run :: self.cmd: %s' % (self.cmd, ) ,Debug.BLUE)
-      os.system(self.cmd.encode('utf8'))
+			if encoder[outFormat] == 'faac':
+				self.cmd = """%s "%s" | %s %s %s "%s" - 2> /dev/null""" % (decoder[inFormat], self.inFile, encoder[outFormat], tagOptions, encoderOpts[encoder[outFormat]], self.outFile, )
+			elif encoder[outFormat] == 'lame':
+				self.cmd = """%s "%s" | %s %s %s "%s" """ % (decoder[inFormat], self.inFile, encoder[outFormat], tagOptions, encoderOpts[encoder[outFormat]], self.outFile, )
+			else:
+				self.cmd = '/bin/false'
 
-      Recode.lock.acquire()
-      Recode.thread_count -= 1
-      Recode.lock.release()
+	# }}}
+
+	def run(self): # {{{
+		"""Do the work: recode the file"""
+		print "recoding: %s" % (self.inFile,)
+		self.__debug.Print('Recode.run :: self.cmd: %s' % (self.cmd, ) ,Debug.BLUE)
+		os.system(self.cmd.encode('utf8'))
+
+		Recode.lock.acquire()
+		Recode.thread_count -= 1
+		Recode.lock.release()
 
 
-   # }}}
+	# }}}
 
 # }}}
 
 if __name__ == "__main__":
 
-   parser = OptionParser(  "%prog <options>",
-                           version=__revision__,
-                           description="appelizes your music in a space-saving way.",
-                           epilog='"Unfree your music!"')
-   parser.add_option(   "-s", "--source",
-                        dest="srcDir",
-                        help="Source directory (mandatory)",
-                        default=False)
-   parser.add_option(   "-d", "--destination",
+	parser = OptionParser(  "%prog <options>",
+							version=__revision__,
+							description="appelizes your music in a space-saving way.",
+							epilog='"Unfree your music!"')
+	parser.add_option(  "-s", "--source",
+						dest="srcDir",
+						help="Source directory (mandatory)",
+								default=False)
+	parser.add_option(  "-d", "--destination",
                         dest="destDir",
-                        help="Destination directory (mandatory), will be created if not there, has to be on the same device as the source directory!",
-                        default=False)
-   parser.add_option(   "-e", "--encoder",
-                        dest="enc",
-                        help='The encoder to use, "lame" (256kbit/s VBR mp3) or "faac" (VBR m4a with maximum quality). You need "lame" and/or "faac" in your $PATH. default="lame"',
-                        default='lame')
-   parser.add_option(   "-t", "--threads",
-                        dest="threads",
-                        type='int',
-                        help="Threads to start, default=<number of CPUs or 1>",
-                        default=False)
-   parser.add_option(   "--no-ogg",
-                        action='store_true',
-                        default=False,
-                        dest="no_ogg",
-                        help="don't recode OGG, only FLAC.")
-   parser.add_option(   "--debug",
-                        action='store_true',
-                        default=False,
-                        dest="debug",
-                        help="debug mode, print out some colored useless stuff")
+						help="Destination directory (mandatory), will be created if not there, has to be on the same device as the source directory!",
+						default=False)
+	parser.add_option(  "-e", "--encoder",
+						dest="enc",
+						help='The encoder to use, "lame" (256kbit/s VBR mp3) or "faac" (VBR m4a with maximum quality). You need "lame" and/or "faac" in your $PATH. default="lame"',
+						default='lame')
+	parser.add_option(  "-t", "--threads",
+						dest="threads",
+						type='int',
+						help="Threads to start, default=<number of CPUs or 1>",
+						default=False)
+	parser.add_option(  "--no-ogg",
+						action='store_true',
+						default=False,
+						dest="no_ogg",
+						help="don't recode OGG, only FLAC.")
+	parser.add_option(  "--debug",
+						action='store_true',
+						default=False,
+						dest="debug",
+						help="debug mode, print out some colored useless stuff")
 
 
-   (options, args) = parser.parse_args()
+	(options, args) = parser.parse_args()
 
-   if not options.srcDir or not options.destDir:
-      parser.print_help()
-      print "\nERROR: no source and/or destination given. I'm not psychic!"
-      sys.exit(255)
+	if not options.srcDir or not options.destDir:
+		parser.print_help()
+		print "\nERROR: no source and/or destination given. I'm not psychic!"
+		sys.exit(255)
 
-   m = musicDirectories(options.srcDir, options.destDir, max_threads=options.threads, debug=options.debug)
+	m = musicDirectories(options.srcDir, options.destDir, max_threads=options.threads, debug=options.debug)
 
-   m.set_encoder(options.enc.lower())
+	m.set_encoder(options.enc.lower())
 
-   if options.no_ogg:
-      m.recodeExtensions.pop('ogg')
+	if options.no_ogg:
+		m.recodeExtensions.pop('ogg')
 
-   m.easywork()
-   m.hardwork()
+	m.easywork()
+	m.hardwork()
 
-# vim:foldmethod=marker:tabstop=3:autoindent:shiftwidth=3:expandtab
+# vim:foldmethod=marker:tabstop=4:autoindent:shiftwidth=4:expandtab:smarttab:softtabstop=4

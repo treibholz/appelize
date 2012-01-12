@@ -14,3 +14,5 @@ if __name__ == '__main__':
             'appelize',
         ],
     )
+
+# vim:foldmethod=marker:tabstop=4:autoindent:shiftwidth=4:expandtab:smarttab:softtabstop=4
