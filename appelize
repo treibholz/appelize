@@ -9,7 +9,7 @@ space saving copy of your music.
 
 """
 
-__revision__ = "0.3.2"
+__revision__ = "0.3.3~dev"
 
 import os
 import re
@@ -106,8 +106,8 @@ class musicDirectories(object): # {{{
                                         'm3u'  : False,
                                     }
         elif encoder == 'lame':
-            self.recodeExtensions = {   'ogg'  : 'm4a',
-                                        'flac' : 'm4a',
+            self.recodeExtensions = {   'ogg'  : 'mp3',
+                                        'flac' : 'mp3',
                                         'm3u'  : False,
                                     }
 
