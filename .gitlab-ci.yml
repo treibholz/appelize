@@ -10,9 +10,9 @@ package:
     script:
         - dch -l "-$(date +%s)" "autobuild master"
         - debuild binary
-        - mkdir -p BUILD
-        - mv ../*.deb BUILD
+        - mkdir -p Debian
+        - mv ../*.deb Debian
     artifacts:
         paths:
-            - BUILD/*.deb
+            - Debian/*.deb
 
