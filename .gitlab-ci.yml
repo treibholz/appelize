@@ -1,8 +1,15 @@
 image: "debian-jessie-debuild"
 
-
+# https://blog.adfinis-sygroup.ch/de/automated-debian-packagebuild-gitlabci/
 package:
     stage: build
     script:
         - dch -l "-$(date +%s)" "autobuild master"
         - debuild binary
+        - mkdir build
+        - mv ../*.deb build
+
+artifacts:
+    paths:
+        - build/*
+
