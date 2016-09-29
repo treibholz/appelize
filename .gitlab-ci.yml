@@ -1,0 +1,13 @@
+image: "debian:latest"
+
+
+before_script:
+  # Uncomment next line if your rails app needs a JS runtime:
+  - apt-update -q && apt install python-support debhelper devscripts
+
+
+package:
+    stage: build
+    script:
+        - dch -l "-$(date +%s)" "autobuild master"
+        - debuild binary
