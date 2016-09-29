@@ -1,9 +1,4 @@
-image: "debian:latest"
-
-before_script:
-    - apt-get update -q
-    - apt-get -y upgrade
-    - apt-get --no-install-recommends -y install python-support debhelper devscripts
+image: "debian-jessie-debuild"
 
 
 package:
