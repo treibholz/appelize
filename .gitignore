@@ -1,0 +1,8 @@
+build/
+debian/*.log
+debian/*.postinst.debhelper
+debian/*.prerm.debhelper
+debian/*.substvars
+debian/appelize/
+debian/files
+
