@@ -1,6 +1,10 @@
 image: "debian-jessie-debuild"
 
+stages:
+    - build
+
 # https://blog.adfinis-sygroup.ch/de/automated-debian-packagebuild-gitlabci/
+# https://docs.gitlab.com/ce/ci/yaml/README.html
 package:
     stage: build
     script:
@@ -8,8 +12,7 @@ package:
         - debuild binary
         - mkdir build
         - mv ../*.deb build
-
-artifacts:
-    paths:
-        - build/*
+    artifacts:
+        paths:
+            - build/*.deb
 
