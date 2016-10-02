@@ -1,0 +1,10 @@
+build/
+debian/appelize.debhelper.log
+debian/appelize.postinst.debhelper
+debian/appelize.prerm.debhelper
+debian/appelize.substvars
+debian/appelize/
+debian/files
+
+
+    

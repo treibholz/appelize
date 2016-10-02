@@ -16,6 +16,34 @@ It recodes all FLACs and OGGs to either mp3 or m4a (AAC).
 One of the design goals is, to have an intuitive userfriendly and simple
 command line user interface.
 
+```
+$ appelize --help                                                                     :(
+Usage: appelize <options>
+
+appelizes your music in a space-saving way.
+
+Options:
+  --version             show program's version number and exit
+  -h, --help            show this help message and exit
+  -s SRCDIR, --source=SRCDIR
+                        Source directory (mandatory)
+  -d DESTDIR, --destination=DESTDIR
+                        Destination directory (mandatory), will be created if
+                        not there, has to be on the same device as the source
+                        directory!
+  -e ENC, --encoder=ENC
+                        The encoder to use, "lame" (256kbit/s VBR mp3) or
+                        "faac" (VBR m4a with maximum quality). You need "lame"
+                        and/or "faac" in your $PATH. default="lame"
+  -t THREADS, --threads=THREADS
+                        Threads to start, default=<number of CPUs or 1>
+  --no-ogg              don't recode OGG, only FLAC.
+  --debug               debug mode, print out some colored useless stuff
+
+"Unfree your music!"
+$
+```
+
 simple example:
 ---------------
 
@@ -29,7 +57,7 @@ recoded to mp3.
 other example:
 --------------
 
-    $ appelize -s ~/Music -d ~/.androidmusic/ --no-ogg 
+    $ appelize -s ~/Music -d ~/.androidmusic/ --no-ogg
     $ appelize -s ~/.androidmusic/ ~/.applemusic -e faac
 
 
