@@ -1,6 +1,8 @@
 Appelize
 ========
 
+[![build status](https://gitlab.uxix.de/klaus/appelize/badges/master/build.svg)](https://gitlab.uxix.de/klaus/appelize/commits/master)
+
 This program "appelizes" your music collection into a separate directory.
 
 It recodes audio files that don't work in the Apple world (like FLAC and OGG)

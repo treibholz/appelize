@@ -1,0 +1,18 @@
+image: "debian-jessie-debuild"
+
+stages:
+    - build
+
+# https://blog.adfinis-sygroup.ch/de/automated-debian-packagebuild-gitlabci/
+# https://docs.gitlab.com/ce/ci/yaml/README.html
+package:
+    stage: build
+    script:
+        - dch -l "-$(date +%s)-$(git rev-parse HEAD)" "autobuild $(git rev-parse --abbrev-ref HEAD)"
+        - debuild binary
+        - mkdir -p Debian
+        - mv ../*.deb Debian
+    artifacts:
+        paths:
+            - Debian/*.deb
+
